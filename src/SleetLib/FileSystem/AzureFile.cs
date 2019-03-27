@@ -28,7 +28,7 @@ namespace Sleet
 
                 DeleteInternal();
 
-                using (var cache = File.OpenWrite(LocalCacheFile.FullName))
+                using (var cache = File.OpenWrite(LocalCacheFileFullName))
                 {
                     await _blob.DownloadToStreamAsync(cache);
                 }
@@ -38,10 +38,10 @@ namespace Sleet
                 {
                     log.LogVerbose($"Decompressing {_blob.Uri.AbsoluteUri}");
 
-                    var gzipFile = LocalCacheFile.FullName + ".gz";
-                    File.Move(LocalCacheFile.FullName, gzipFile);
+                    var gzipFile = LocalCacheFileFullName + ".gz";
+                    File.Move(LocalCacheFileFullName, gzipFile);
 
-                    using (Stream destination = File.Create(LocalCacheFile.FullName))
+                    using (Stream destination = File.Create(LocalCacheFileFullName))
                     using (Stream source = File.OpenRead(gzipFile))
                     using (Stream zipStream = new GZipStream(source, CompressionMode.Decompress))
                     {
@@ -55,13 +55,13 @@ namespace Sleet
 
         protected override async Task CopyToSource(ILogger log, CancellationToken token)
         {
-            if (File.Exists(LocalCacheFile.FullName))
+            if (File.Exists(LocalCacheFileFullName))
             {
                 log.LogVerbose($"Pushing {_blob.Uri.AbsoluteUri}");
 
-                using (var cache = LocalCacheFile.OpenRead())
+                using (var cache = await GetStream(log, token))
                 {
-                    Stream writeStream = cache;
+                    var writeStream = cache;
 
                     if (_blob.Uri.AbsoluteUri.EndsWith(".nupkg", StringComparison.Ordinal))
                     {
@@ -73,7 +73,7 @@ namespace Sleet
                         _blob.Properties.ContentType = "application/xml";
                     }
                     else if (_blob.Uri.AbsoluteUri.EndsWith(".json", StringComparison.Ordinal)
-                            || await JsonUtility.IsJsonAsync(LocalCacheFile.FullName))
+                            || await JsonUtility.IsJsonAsync(LocalCacheFileFullName))
                     {
                         _blob.Properties.ContentType = "application/json";
                         _blob.Properties.ContentEncoding = "gzip";

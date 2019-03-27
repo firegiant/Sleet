@@ -42,7 +42,7 @@ namespace Sleet
             DeleteInternal();
 
             string contentEncoding;
-            using (var cache = File.OpenWrite(LocalCacheFile.FullName))
+            using (var cache = File.OpenWrite(LocalCacheFileFullName))
             {
                 contentEncoding = await DownloadFileAsync(client, bucketName, key, cache, token).ConfigureAwait(false);
             }
@@ -51,10 +51,10 @@ namespace Sleet
             {
                 log.LogVerbose($"Decompressing {absoluteUri}");
 
-                var gzipFile = LocalCacheFile.FullName + ".gz";
-                File.Move(LocalCacheFile.FullName, gzipFile);
+                var gzipFile = LocalCacheFileFullName + ".gz";
+                File.Move(LocalCacheFileFullName, gzipFile);
 
-                using (Stream destination = File.Create(LocalCacheFile.FullName))
+                using (Stream destination = File.Create(LocalCacheFileFullName))
                 using (Stream source = File.OpenRead(gzipFile))
                 using (Stream zipStream = new GZipStream(source, CompressionMode.Decompress))
                 {
@@ -68,7 +68,7 @@ namespace Sleet
         protected override async Task CopyToSource(ILogger log, CancellationToken token)
         {
             var absoluteUri = UriUtility.GetPath(RootPath, key);
-            if (!File.Exists(LocalCacheFile.FullName))
+            if (!File.Exists(LocalCacheFileFullName))
             {
                 if (await FileExistsAsync(client, bucketName, key, token).ConfigureAwait(false))
                 {
@@ -85,9 +85,9 @@ namespace Sleet
 
             log.LogVerbose($"Pushing {absoluteUri}");
 
-            using (var cache = LocalCacheFile.OpenRead())
+            using (var cache = await GetStream(log, token))
             {
-                Stream writeStream = cache;
+                var writeStream = cache;
                 string contentType = null, contentEncoding = null;
                 if (key.EndsWith(".nupkg", StringComparison.Ordinal))
                 {
@@ -99,7 +99,7 @@ namespace Sleet
                     contentType = "application/xml";
                 }
                 else if (key.EndsWith(".json", StringComparison.Ordinal)
-                         || await JsonUtility.IsJsonAsync(LocalCacheFile.FullName))
+                         || await JsonUtility.IsJsonAsync(LocalCacheFileFullName))
                 {
                     contentType = "application/json";
                     contentEncoding = "gzip";

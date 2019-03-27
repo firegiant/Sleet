@@ -94,14 +94,14 @@ namespace Sleet
             return memoryStream;
         }
 
-        public static async Task SaveJsonAsync(FileInfo file, JObject json)
+        public static async Task SaveJsonAsync(string file, JObject json)
         {
-            if (File.Exists(file.FullName))
+            if (File.Exists(file))
             {
-                File.Delete(file.FullName);
+                File.Delete(file);
             }
 
-            using (var stream = File.OpenWrite(file.FullName))
+            using (var stream = File.OpenWrite(file))
             {
                 await WriteJsonAsync(json, stream);
             }

@@ -51,11 +51,11 @@ namespace Sleet
         protected bool? RemoteExistsCacheValue { get; private set; }
 
         /// <summary>
-        /// Local file on disk.
+        /// Local file name on disk.
         /// If IsLink is true this is an external file.
         /// If IsLink is false, this is a temp file.
         /// </summary>
-        protected FileInfo LocalCacheFile { get; private set; }
+        public string LocalCacheFileFullName => _localCacheFile.FullName;
 
         /// <summary>
         /// File operation performance tracker.
@@ -74,6 +74,13 @@ namespace Sleet
         protected int RetryCount { get; set; } = 5;
 
         /// <summary>
+        /// Local file on disk.
+        /// If IsLink is true this is an external file.
+        /// If IsLink is false, this is a temp file.
+        /// </summary>
+        private FileInfo _localCacheFile;
+
+        /// <summary>
         /// Original local cache file from the constructor. This is used if the linked
         /// file is removed.
         /// </summary>
@@ -85,8 +92,8 @@ namespace Sleet
             RootPath = rootPath ?? throw new ArgumentNullException(nameof(rootPath));
             EntityUri = displayPath ?? throw new ArgumentNullException(nameof(displayPath));
             PerfTracker = perfTracker ?? NullPerfTracker.Instance;
-            LocalCacheFile = localCacheFile ?? throw new ArgumentNullException(nameof(localCacheFile));
-            _originalLocalCacheFile = LocalCacheFile;
+            _localCacheFile = localCacheFile ?? throw new ArgumentNullException(nameof(localCacheFile));
+            _originalLocalCacheFile = _localCacheFile;
         }
 
         /// <summary>
@@ -97,7 +104,7 @@ namespace Sleet
             // If the file was aleady downloaded then the local disk is the authority.
             if (IsDownloaded)
             {
-                return File.Exists(LocalCacheFile.FullName);
+                return File.Exists(LocalCacheFileFullName);
             }
 
             // If the file was not downloaded check the remote source if needed.
@@ -166,7 +173,7 @@ namespace Sleet
         public async Task<JObject> GetJson(ILogger log, CancellationToken token)
         {
             await EnsureFileOrThrow(log, token);
-            return await JsonUtility.LoadJsonAsync(LocalCacheFile);
+            return await JsonUtility.LoadJsonAsync(LocalCacheFileFullName);
         }
 
         /// <summary>
@@ -178,7 +185,7 @@ namespace Sleet
 
             if (await ExistsWithFetch(log, token))
             {
-                json = await JsonUtility.LoadJsonAsync(LocalCacheFile);
+                json = await JsonUtility.LoadJsonAsync(LocalCacheFileFullName);
             }
 
             return json;
@@ -195,7 +202,7 @@ namespace Sleet
                 Delete(log, token);
 
                 // Write out json to the file.
-                return JsonUtility.SaveJsonAsync(LocalCacheFile, json);
+                return JsonUtility.SaveJsonAsync(LocalCacheFileFullName, json);
             }
         }
 
@@ -210,7 +217,7 @@ namespace Sleet
                 Delete(log, token);
 
                 using (stream)
-                using (var writeStream = File.OpenWrite(LocalCacheFile.FullName))
+                using (var writeStream = File.OpenWrite(LocalCacheFileFullName))
                 {
                     await stream.CopyToAsync(writeStream);
                 }
@@ -234,7 +241,7 @@ namespace Sleet
             // Mark this file as linked and use path directly instead
             // of creating a new temp file and copy.
             IsLink = true;
-            LocalCacheFile = file;
+            _localCacheFile = file;
         }
 
         /// <summary>
@@ -258,12 +265,12 @@ namespace Sleet
             {
                 // Convert this file back to a non-linked and non-existant temp file.
                 IsLink = false;
-                LocalCacheFile = _originalLocalCacheFile;
+                _localCacheFile = _originalLocalCacheFile;
             }
 
-            if (File.Exists(LocalCacheFile.FullName))
+            if (File.Exists(LocalCacheFileFullName))
             {
-                File.Delete(LocalCacheFile.FullName);
+                File.Delete(LocalCacheFileFullName);
             }
         }
 
@@ -308,9 +315,9 @@ namespace Sleet
         {
             await EnsureFile(log, token);
 
-            if (!File.Exists(LocalCacheFile.FullName))
+            if (!File.Exists(LocalCacheFileFullName))
             {
-                throw new FileNotFoundException($"File does not exist. Remote: {EntityUri.AbsoluteUri} Local: {LocalCacheFile.FullName}");
+                throw new FileNotFoundException($"File does not exist. Remote: {EntityUri.AbsoluteUri} Local: {LocalCacheFileFullName}");
             }
         }
 
@@ -321,7 +328,7 @@ namespace Sleet
         {
             await EnsureFileOrThrow(log, token);
 
-            return File.OpenRead(LocalCacheFile.FullName);
+            return File.OpenRead(LocalCacheFileFullName);
         }
 
         /// <summary>
@@ -341,13 +348,13 @@ namespace Sleet
             await EnsureFile(log, token);
 
             // Check if the local copy exists
-            if (File.Exists(LocalCacheFile.FullName))
+            if (File.Exists(LocalCacheFileFullName))
             {
                 // Create the parent dir
                 pathInfo.Directory.Create();
 
                 // Copy the file
-                LocalCacheFile.CopyTo(pathInfo.FullName, overwrite);
+                _localCacheFile.CopyTo(pathInfo.FullName, overwrite);
 
                 return true;
             }
@@ -365,9 +372,9 @@ namespace Sleet
             {
                 long size = 0;
 
-                if (File.Exists(LocalCacheFile.FullName))
+                if (File.Exists(LocalCacheFileFullName))
                 {
-                    size = LocalCacheFile.Length;
+                    size = _localCacheFile.Length;
                 }
 
                 return size;

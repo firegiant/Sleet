@@ -22,7 +22,7 @@ namespace Sleet
             if (File.Exists(_sourceFile.FullName))
             {
                 log.LogVerbose($"GET {_sourceFile.FullName}");
-                _sourceFile.CopyTo(LocalCacheFile.FullName);
+                _sourceFile.CopyTo(LocalCacheFileFullName);
             }
 
             return Task.FromResult(true);
@@ -30,7 +30,7 @@ namespace Sleet
 
         protected override Task CopyToSource(ILogger log, CancellationToken token)
         {
-            if (File.Exists(LocalCacheFile.FullName))
+            if (File.Exists(LocalCacheFileFullName))
             {
                 log.LogVerbose($"Pushing {_sourceFile.FullName}");
 
@@ -44,7 +44,7 @@ namespace Sleet
                     File.Delete(tmp);
                 }
 
-                LocalCacheFile.CopyTo(tmp);
+                File.Copy(LocalCacheFileFullName, tmp);
 
                 if (File.Exists(_sourceFile.FullName))
                 {
