@@ -187,9 +187,9 @@ namespace Sleet
             PackageInput result = null;
 
             using (var zip = new ZipArchive(File.OpenRead(file), ZipArchiveMode.Read, leaveOpen: false))
-            using (var reader = new PackageArchiveReader(file))
+            using (var reader = new PackageArchiveReader(zip))
             {
-                var isSymbolsPackage = SymbolsUtility.IsSymbolsPackage(zip, file);
+                var isSymbolsPackage = SymbolsUtility.IsSymbolsPackage(file);
                 result = new PackageInput(file, isSymbolsPackage, reader.NuspecReader);
             }
 
