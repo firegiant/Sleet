@@ -1,15 +1,12 @@
 ﻿<Project ToolsVersion="15.0">
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'README.md'))\build\common\common.props" />
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
-  <PropertyGroup Condition=" '$(IsXPlat)' != 'true' ">
-    <TargetFrameworks>netstandard2.0;netstandard1.3;net46;net45</TargetFrameworks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(IsXPlat)' == 'true' ">
-    <TargetFrameworks>netstandard2.0;netstandard1.3</TargetFrameworks>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>SleetLib</PackageId>
+    <PackageId>FireGiant.SleetLib</PackageId>
     <RootNamespace>SleetLib</RootNamespace>
     <AssemblyName>SleetLib</AssemblyName>
     <Description>Access Sleet.exe commands through the Sleet API.</Description>
