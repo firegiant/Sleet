@@ -33,6 +33,11 @@ namespace Sleet
         public bool HasChanges { get; private set; }
 
         /// <summary>
+        /// True if the file was been modified during processing.
+        /// </summary>
+        public bool WasChanged { get; private set; }
+
+        /// <summary>
         /// True if the file was downloaded at some point.
         /// This will be true even if the file was deleted.
         /// </summary>
@@ -140,6 +145,7 @@ namespace Sleet
 
                             // The file no longer has changes.
                             HasChanges = false;
+                            WasChanged = true;
 
                             break;
                         }

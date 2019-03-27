@@ -56,6 +56,11 @@ namespace Sleet
         /// </summary>
         bool HasChanges { get; }
 
+        /// <summary>
+        /// True if the file was been modified during processing.
+        /// </summary>
+        bool WasChanged { get; }
+
         Task<Stream> GetStream(ILogger log, CancellationToken token);
 
         Task<bool> CopyTo(string path, bool overwrite, ILogger log, CancellationToken token);
